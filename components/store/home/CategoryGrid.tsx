@@ -5,7 +5,7 @@ const FALLBACK_IMAGES: Record<string, string> = {
   tenis: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80',
   botas: 'https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=600&q=80',
   sandalias: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&q=80',
-  'sapatos-sociais': 'https://images.unsplash.com/photo-1614252239476-1cfb049c1f48?w=600&q=80',
+  'sapatos-sociais': 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=600&q=80',
 }
 
 interface Category {
@@ -36,6 +36,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
                 src={imageSrc}
                 alt={cat.name}
                 fill
+                sizes="(max-width: 768px) 50vw, 25vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/30" />

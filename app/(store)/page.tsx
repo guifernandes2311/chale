@@ -14,8 +14,8 @@ export default async function HomePage() {
       getFeaturedProducts(8),
       getProducts({ ordenar: 'novo', pagina: '1' }),
     ])
-  } catch {
-    // DB not configured yet — show static home
+  } catch (error) {
+    console.error('[HomePage] Falha ao carregar dados do banco:', error)
   }
 
   return (
