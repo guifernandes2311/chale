@@ -137,6 +137,10 @@ export const products = pgTable('products', {
   tags: text('tags').array().notNull().default([]),
   isActive: boolean('is_active').default(true).notNull(),
   isFeatured: boolean('is_featured').default(false).notNull(),
+  weight: integer('weight').default(500).notNull(),
+  height: integer('height').default(12).notNull(),
+  width: integer('width').default(30).notNull(),
+  length: integer('length').default(20).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })

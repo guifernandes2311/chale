@@ -1,6 +1,14 @@
 import { z } from 'zod'
 import { addressSchema } from './usuario'
 
+export { addressSchema }
+
+export const customerSchema = z.object({
+  name: z.string().min(2, 'Nome obrigatório'),
+  phone: z.string().min(10, 'Telefone inválido'),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
+})
+
 export const cartItemSchema = z.object({
   variantId: z.string(),
   productId: z.string(),
@@ -14,10 +22,12 @@ export const cartItemSchema = z.object({
 
 export const createOrderSchema = z.object({
   items: z.array(cartItemSchema).min(1),
+  customer: customerSchema,
   address: addressSchema,
   shippingMethod: z.string(),
+  shippingName: z.string(),
   shippingCost: z.number().min(0),
-  paymentMethod: z.enum(['stripe', 'mercadopago']),
+  paymentMethod: z.enum(['whatsapp', 'stripe', 'mercadopago']),
   guestEmail: z.string().email().optional(),
 })
 
@@ -36,3 +46,4 @@ export const updateOrderStatusSchema = z.object({
 })
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>
+export type CustomerInput = z.infer<typeof customerSchema>

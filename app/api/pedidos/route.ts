@@ -5,6 +5,7 @@ import { createOrderSchema } from '@/lib/validations/pedido'
 import { db } from '@/lib/db'
 import { users } from '@/drizzle/schema'
 import bcrypt from 'bcryptjs'
+import { buildWhatsAppMessage, getWhatsAppUrl } from '@/lib/whatsapp'
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,13 +47,16 @@ export async function POST(request: NextRequest) {
     let userId = session?.user?.id
 
     if (!userId) {
-      const guestEmail = parsed.data.guestEmail ?? `guest-${Date.now()}@chale.local`
+      const guestEmail =
+        parsed.data.customer.email ||
+        parsed.data.guestEmail ||
+        `guest-${Date.now()}@chale.local`
       const passwordHash = await bcrypt.hash(crypto.randomUUID(), 12)
       const [guest] = await db
         .insert(users)
         .values({
           email: guestEmail,
-          name: 'Convidado',
+          name: parsed.data.customer.name,
           password: passwordHash,
           role: 'CUSTOMER',
         })
@@ -61,7 +65,42 @@ export async function POST(request: NextRequest) {
     }
 
     const order = await createOrder(userId, parsed.data)
-    return NextResponse.json({ order }, { status: 201 })
+
+    let whatsappUrl: string | undefined
+    if (parsed.data.paymentMethod === 'whatsapp') {
+      const subtotal = parsed.data.items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      )
+      const message = buildWhatsAppMessage({
+        orderId: order.id,
+        customerName: parsed.data.customer.name,
+        customerPhone: parsed.data.customer.phone,
+        items: parsed.data.items.map((i) => ({
+          name: i.name,
+          size: i.size,
+          color: i.color,
+          quantity: i.quantity,
+          price: i.price,
+        })),
+        subtotal,
+        shippingCost: parsed.data.shippingCost,
+        shippingName: parsed.data.shippingName,
+        total: subtotal + parsed.data.shippingCost,
+        address: {
+          street: parsed.data.address.street,
+          number: parsed.data.address.number,
+          complement: parsed.data.address.complement,
+          district: parsed.data.address.district,
+          city: parsed.data.address.city,
+          state: parsed.data.address.state,
+          cep: parsed.data.address.cep,
+        },
+      })
+      whatsappUrl = getWhatsAppUrl(parsed.data.customer.phone, message)
+    }
+
+    return NextResponse.json({ order, whatsappUrl }, { status: 201 })
   } catch (error) {
     console.error('[POST /api/pedidos]', error)
     const message = error instanceof Error ? error.message : 'Erro interno'

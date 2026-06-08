@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import '../lib/load-env'
 import { db } from '@/lib/db'
 import {
   users,
@@ -7,15 +7,16 @@ import {
   variants,
 } from '@/drizzle/schema'
 import bcrypt from 'bcryptjs'
+import { eq, inArray } from 'drizzle-orm'
 import { slugify } from '@/lib/utils/slugify'
 
 const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80',
   'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&q=80',
-  'https://images.unsplash.com/photo-1608231387042-66d1773070a9?w=800&q=80',
   'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&q=80',
   'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&q=80',
   'https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=800&q=80',
+  'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&q=80',
 ]
 
 const CATEGORY_DATA = [

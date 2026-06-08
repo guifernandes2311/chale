@@ -1,18 +1,34 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { getAllProductsAdmin } from '@/lib/api/products'
+import { ProductCategoryFilter } from '@/components/admin/ProductCategoryFilter'
+import { ProductRowActions } from '@/components/admin/ProductRowActions'
+import { getAllProductsAdmin, getCategories } from '@/lib/api/products'
 import { formatPrice } from '@/lib/utils/formatters'
 
-export default async function AdminProductsPage() {
+interface Props {
+  searchParams: Promise<{ categoria?: string }>
+}
+
+export default async function AdminProductsPage({ searchParams }: Props) {
+  const { categoria } = await searchParams
   let products: Awaited<ReturnType<typeof getAllProductsAdmin>> = []
+  let categories: Awaited<ReturnType<typeof getCategories>> = []
 
   try {
-    products = await getAllProductsAdmin()
+    ;[products, categories] = await Promise.all([
+      getAllProductsAdmin({ categoria }),
+      getCategories(),
+    ])
   } catch {
     // DB not configured
   }
+
+  const emptyMessage = categoria
+    ? 'Nenhum produto nesta categoria.'
+    : 'Nenhum produto cadastrado.'
 
   return (
     <div>
@@ -23,7 +39,16 @@ export default async function AdminProductsPage() {
         </Button>
       </div>
 
-      <div className="mt-8 rounded-md border border-border bg-white">
+      <div className="mt-6">
+        <Suspense fallback={null}>
+          <ProductCategoryFilter
+            categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
+            count={products.length}
+          />
+        </Suspense>
+      </div>
+
+      <div className="mt-4 rounded-md border border-border bg-white">
         <Table>
           <TableHeader>
             <TableRow>
@@ -31,7 +56,7 @@ export default async function AdminProductsPage() {
               <TableHead>Categoria</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead></TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -46,16 +71,14 @@ export default async function AdminProductsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/admin/produtos/${product.id}`}>Editar</Link>
-                  </Button>
+                  <ProductRowActions id={product.id} slug={product.slug} name={product.name} />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
         {products.length === 0 && (
-          <p className="p-8 text-center text-muted">Nenhum produto cadastrado.</p>
+          <p className="p-8 text-center text-muted">{emptyMessage}</p>
         )}
       </div>
     </div>

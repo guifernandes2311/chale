@@ -35,7 +35,7 @@ export default async function AdminOrdersPage() {
                 <TableCell className="font-mono text-xs">#{order.id.slice(0, 8)}</TableCell>
                 <TableCell>{user.name ?? user.email}</TableCell>
                 <TableCell>
-                  <StatusBadge status={order.status as OrderStatus} />
+                  <StatusBadge status={order.status as OrderStatus} paymentMethod={order.paymentMethod} />
                 </TableCell>
                 <TableCell>{formatPrice(order.total)}</TableCell>
                 <TableCell className="text-sm text-muted">{formatDateTime(order.createdAt)}</TableCell>

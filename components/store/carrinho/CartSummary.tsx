@@ -16,9 +16,9 @@ export function CartSummary({ subtotal, onClose }: CartSummaryProps) {
         <span className="text-muted">Subtotal</span>
         <span className="font-medium">{formatPrice(subtotal)}</span>
       </div>
-      <p className="mt-1 text-xs text-muted">Frete calculado no checkout</p>
+      <p className="mt-1 text-xs text-muted">Frete calculado na finalização</p>
       <Button variant="default" className="mt-4 w-full" asChild onClick={onClose}>
-        <Link href="/checkout">Ir para checkout</Link>
+        <Link href="/checkout">Finalizar pedido</Link>
       </Button>
     </div>
   )

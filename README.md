@@ -1,118 +1,96 @@
 # Chalé Calçados
 
-E-commerce de calçados — MVP com Next.js, Drizzle ORM, NextAuth e Stripe.
+E-commerce de calçados com checkout via WhatsApp, frete Melhor Envio e imagens no Supabase Storage.
 
 ## Stack
 
-- **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Framer Motion
+- **Frontend:** Next.js 16, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Backend:** API Routes, Drizzle ORM, PostgreSQL (Supabase)
-- **Auth:** NextAuth.js v5 (email/senha + Google OAuth opcional)
-- **Pagamentos:** Stripe (cartão)
-- **Emails:** Resend (com fallback para console)
+- **Auth:** NextAuth.js v5
+- **Imagens:** Supabase Storage
+- **Frete:** Melhor Envio API
+- **Vendas:** Checkout finaliza no WhatsApp (sem pagamento online)
+
+## Fluxo de compra
+
+1. Cliente adiciona produtos ao carrinho
+2. Checkout: nome, telefone, endereço (ViaCEP)
+3. Cálculo de frete via Melhor Envio
+4. Pedido registrado no banco (status pendente, estoque não baixado)
+5. Redirecionamento para WhatsApp com resumo completo
+6. Admin confirma pagamento e marca pedido como "Em separação" (baixa estoque)
 
 ## Setup local
 
-### 1. Instalar dependências
+### 1. Dependências
 
 ```bash
 npm install
 ```
 
-### 2. Configurar variáveis de ambiente
+### 2. Variáveis de ambiente
 
 ```bash
 cp .env.example .env.local
 ```
 
-Preencha pelo menos:
+**Obrigatório:**
 
 ```bash
 DATABASE_URL="postgresql://..."
-AUTH_SECRET="..."   # openssl rand -base64 32
-AUTH_URL=http://localhost:3000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+AUTH_SECRET="..."                          # openssl rand -base64 32
+NEXT_PUBLIC_WHATSAPP_NUMBER=5511999999999  # WhatsApp da loja
+MELHOR_ENVIO_TOKEN="..."                   # painel Melhor Envio
+STORE_CEP=01310100                         # CEP de origem
+MELHOR_ENVIO_SANDBOX=true                  # dev
 ```
 
-### 3. Banco de dados (Supabase)
+**Supabase Storage (upload de imagens no admin):**
 
-1. Crie um projeto em [supabase.com](https://supabase.com)
-2. Copie a connection string (Settings → Database → URI)
-3. Execute migrations e seed:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+No dashboard Supabase: Storage → criar bucket público `produtos`.
+
+### 3. Banco de dados
 
 ```bash
 npm run db:push
 npm run db:seed
 ```
 
-### 4. Rodar o projeto
+### 4. Rodar
 
 ```bash
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000)
+## Credenciais de teste
 
-## Credenciais de teste (seed)
+| Papel   | Email                      | Senha    |
+|---------|----------------------------|----------|
+| Admin   | admin@chalecalcados.com.br | senha123 |
+| Cliente | cliente@teste.com          | senha123 |
 
-| Papel    | Email                          | Senha    |
-|----------|--------------------------------|----------|
-| Admin    | admin@chalecalcados.com.br     | senha123 |
-| Cliente  | cliente@teste.com              | senha123 |
+## Melhor Envio
+
+1. Crie conta em [melhorenvio.com.br](https://melhorenvio.com.br)
+2. Integrações → Gerar token de API
+3. Use `MELHOR_ENVIO_SANDBOX=true` para testes
 
 ## Scripts
 
-| Comando           | Descrição                    |
-|-------------------|------------------------------|
-| `npm run dev`     | Servidor de desenvolvimento  |
-| `npm run build`   | Build de produção            |
-| `npm run lint`    | ESLint                       |
-| `npm run type-check` | Verificação TypeScript    |
-| `npm run test`    | Testes Vitest                |
-| `npm run db:push` | Aplicar schema no banco      |
-| `npm run db:seed` | Popular dados iniciais       |
-| `npm run db:studio` | Drizzle Studio             |
+| Comando              | Descrição              |
+|----------------------|------------------------|
+| `npm run dev`        | Desenvolvimento        |
+| `npm run build`      | Build produção         |
+| `npm run test`       | Testes Vitest          |
+| `npm run db:push`    | Aplicar schema         |
+| `npm run db:seed`    | Dados iniciais         |
 
-## Stripe (modo teste)
+## Deploy Vercel
 
-1. Crie conta em [stripe.com](https://stripe.com)
-2. Adicione ao `.env.local`:
-
-```bash
-STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-3. Para webhooks locais, use [Stripe CLI](https://stripe.com/docs/stripe-cli):
-
-```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-```
-
-## Deploy na Vercel
-
-1. Conecte o repositório GitHub à Vercel
-2. Configure todas as variáveis de `.env.example`
-3. Rode `npm run db:push` no Supabase de produção
-4. Rode `npm run db:seed` (apenas na primeira vez)
-5. Configure webhook Stripe apontando para `https://seu-dominio.com/api/webhooks/stripe`
-
-## Estrutura principal
-
-```
-app/
-  (store)/     # Loja pública
-  (auth)/      # Login e registro
-  admin/       # Painel administrativo
-  api/         # API Routes
-components/    # UI e componentes da loja
-drizzle/       # Schema e seed
-lib/           # Auth, API, validações, utils
-store/         # Zustand (carrinho)
-```
-
-## Próximos passos (Fase 2)
-
-- MercadoPago (PIX + Boleto)
-- Cálculo de frete (Melhor Envio)
-- Wishlist e cupons de desconto
+Configure todas as variáveis do `.env.example` na Vercel, incluindo `AUTH_URL` e `NEXT_PUBLIC_APP_URL` com o domínio de produção.

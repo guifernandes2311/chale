@@ -36,7 +36,7 @@ export default async function OrdersPage() {
                   <p className="text-sm text-muted">{formatDate(order.createdAt)}</p>
                 </div>
                 <div className="text-right">
-                  <StatusBadge status={order.status as OrderStatus} />
+                  <StatusBadge status={order.status as OrderStatus} paymentMethod={order.paymentMethod} />
                   <p className="mt-1 font-medium">{formatPrice(order.total)}</p>
                 </div>
               </div>

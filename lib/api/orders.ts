@@ -4,26 +4,64 @@ import { eq, desc, and, sql, gte } from 'drizzle-orm'
 import type { CreateOrderInput } from '@/lib/validations/pedido'
 import type { OrderStatus } from '@/types'
 
-export async function createOrder(userId: string, data: CreateOrderInput) {
-  const subtotal = data.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const total = subtotal + data.shippingCost
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
-  return db.transaction(async (tx) => {
-    for (const item of data.items) {
-      const [variant] = await tx
-        .select()
-        .from(variants)
-        .where(eq(variants.id, item.variantId))
-        .limit(1)
+async function validateStock(tx: DbTransaction, items: CreateOrderInput['items']) {
+  for (const item of items) {
+    const [variant] = await tx
+      .select()
+      .from(variants)
+      .where(eq(variants.id, item.variantId))
+      .limit(1)
 
-      if (!variant || variant.stock < item.quantity) {
-        throw new Error(`Estoque insuficiente para ${item.name} (${item.size})`)
-      }
+    if (!variant || variant.stock < item.quantity) {
+      throw new Error(`Estoque insuficiente para ${item.name} (${item.size})`)
+    }
+  }
+}
 
+async function decrementStock(
+  tx: DbTransaction,
+  items: { variantId: string; quantity: number }[]
+) {
+  for (const item of items) {
+    const [variant] = await tx
+      .select()
+      .from(variants)
+      .where(eq(variants.id, item.variantId))
+      .limit(1)
+
+    if (variant) {
       await tx
         .update(variants)
         .set({ stock: variant.stock - item.quantity })
         .where(eq(variants.id, item.variantId))
+    }
+  }
+}
+
+export async function createOrder(userId: string, data: CreateOrderInput) {
+  const subtotal = data.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const total = subtotal + data.shippingCost
+
+  const addressSnapshot = {
+    ...data.address,
+    customerName: data.customer.name,
+    customerPhone: data.customer.phone,
+    customerEmail: data.customer.email || undefined,
+    shippingMethod: data.shippingMethod,
+    shippingName: data.shippingName,
+  }
+
+  return db.transaction(async (tx) => {
+    await validateStock(tx, data.items)
+
+    const shouldDecrementNow = data.paymentMethod !== 'whatsapp'
+    if (shouldDecrementNow) {
+      await decrementStock(
+        tx,
+        data.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
+      )
     }
 
     const [order] = await tx
@@ -35,7 +73,7 @@ export async function createOrder(userId: string, data: CreateOrderInput) {
         shippingCost: data.shippingCost.toFixed(2),
         discount: '0',
         total: total.toFixed(2),
-        addressSnapshot: data.address,
+        addressSnapshot,
         paymentMethod: data.paymentMethod,
       })
       .returning()
@@ -102,6 +140,35 @@ export async function updateOrderStatus(
   trackingCode?: string | null,
   notes?: string | null
 ) {
+  const order = await getOrderById(orderId)
+  if (!order) return null
+
+  const shouldDecrementStock =
+    order.paymentMethod === 'whatsapp' &&
+    order.status === 'PENDING' &&
+    (status === 'PROCESSING' || status === 'PAID')
+
+  if (shouldDecrementStock && order.items) {
+    await db.transaction(async (tx) => {
+      for (const item of order.items!) {
+        const [variant] = await tx
+          .select()
+          .from(variants)
+          .where(eq(variants.id, item.variantId))
+          .limit(1)
+
+        if (!variant || variant.stock < item.quantity) {
+          throw new Error(`Estoque insuficiente para o item ${item.id}`)
+        }
+      }
+
+      await decrementStock(
+        tx,
+        order.items!.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
+      )
+    })
+  }
+
   const [updated] = await db
     .update(orders)
     .set({

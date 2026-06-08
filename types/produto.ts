@@ -28,6 +28,10 @@ export interface Product {
   tags: string[]
   isActive: boolean
   isFeatured: boolean
+  weight: number
+  height: number
+  width: number
+  length: number
   variants?: ProductVariant[]
   createdAt: Date
   updatedAt: Date

@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { products } from '@/drizzle/schema'
-import { getProductBySlug } from '@/lib/api/products'
+import { getProductBySlug, productHasOrders } from '@/lib/api/products'
 import { productSchema } from '@/lib/validations/produto'
 import { slugify } from '@/lib/utils/slugify'
 
@@ -64,7 +64,20 @@ export async function DELETE(_request: NextRequest, { params }: Props) {
     }
 
     const { slug } = await params
-    await db.update(products).set({ isActive: false }).where(eq(products.slug, slug))
+
+    const [product] = await db.select().from(products).where(eq(products.slug, slug)).limit(1)
+    if (!product) {
+      return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 })
+    }
+
+    if (await productHasOrders(product.id)) {
+      return NextResponse.json(
+        { error: 'Este produto possui pedidos e não pode ser excluído' },
+        { status: 409 }
+      )
+    }
+
+    await db.delete(products).where(eq(products.slug, slug))
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/produtos/[slug]]', error)

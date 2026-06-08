@@ -16,6 +16,11 @@ export interface AddressSnapshot {
   district: string
   city: string
   state: string
+  customerName?: string
+  customerPhone?: string
+  customerEmail?: string
+  shippingMethod?: string
+  shippingName?: string
 }
 
 export interface OrderItemSnapshot {

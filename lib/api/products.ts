@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { products, categories, variants } from '@/drizzle/schema'
+import { products, categories, variants, orderItems } from '@/drizzle/schema'
 import { eq, and, gte, lte, ilike, desc, asc, sql, inArray } from 'drizzle-orm'
 import type { ProductFilters } from '@/types'
 
@@ -177,8 +177,15 @@ export async function getVariantStock(variantId: string) {
   return variant ?? null
 }
 
-export async function getAllProductsAdmin() {
-  return db
+export async function getAllProductsAdmin(filters?: { categoria?: string }) {
+  const conditions = []
+
+  if (filters?.categoria) {
+    const cat = await getCategoryBySlug(filters.categoria)
+    if (cat) conditions.push(eq(products.categoryId, cat.id))
+  }
+
+  const query = db
     .select({
       product: products,
       category: categories,
@@ -186,6 +193,54 @@ export async function getAllProductsAdmin() {
     .from(products)
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .orderBy(desc(products.createdAt))
+
+  if (conditions.length > 0) {
+    return query.where(and(...conditions))
+  }
+
+  return query
+}
+
+export async function getProductByIdAdmin(id: string) {
+  const [item] = await db
+    .select({
+      product: products,
+      category: categories,
+    })
+    .from(products)
+    .innerJoin(categories, eq(products.categoryId, categories.id))
+    .where(eq(products.id, id))
+    .limit(1)
+
+  return item ?? null
+}
+
+export async function variantHasOrders(variantId: string) {
+  const [item] = await db
+    .select({ id: orderItems.id })
+    .from(orderItems)
+    .where(eq(orderItems.variantId, variantId))
+    .limit(1)
+
+  return !!item
+}
+
+export async function productHasOrders(productId: string) {
+  const productVariants = await db
+    .select({ id: variants.id })
+    .from(variants)
+    .where(eq(variants.productId, productId))
+
+  if (productVariants.length === 0) return false
+
+  const variantIds = productVariants.map((v) => v.id)
+  const [item] = await db
+    .select({ id: orderItems.id })
+    .from(orderItems)
+    .where(inArray(orderItems.variantId, variantIds))
+    .limit(1)
+
+  return !!item
 }
 
 export async function getLowStockVariants(threshold = 5) {

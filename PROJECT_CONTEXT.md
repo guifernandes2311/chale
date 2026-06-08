@@ -31,8 +31,10 @@
 - **ORM:** Drizzle ORM
 - **Banco de dados:** PostgreSQL (Supabase)
 - **Autenticação:** NextAuth.js v5 (Auth.js) — email/senha + OAuth (Google)
-- **Upload de imagens:** Cloudinary (Storage do Supabase inicialmente)
-- **Pagamentos:** Stripe (cartão) + MercadoPago (PIX, boleto)
+- **Upload de imagens:** Supabase Storage (bucket `produtos`)
+- **Pagamentos:** WhatsApp (fluxo principal) — pagamento combinado com a vendedora
+- **Frete:** Melhor Envio API
+- **Imagens:** Supabase Storage
 - **Emails transacionais:** Resend + React Email
 
 ### Infra & DevOps
@@ -356,9 +358,9 @@ model OrderItem {
 **Checkout** (fluxo em steps)
 1. **Identificação** — login ou continuar como convidado
 2. **Endereço** — busca por CEP (ViaCEP API), formulário, selecionar endereço salvo
-3. **Frete** — opções de entrega (simulado ou integração Correios/Melhor Envio)
-4. **Pagamento** — Cartão (Stripe) / PIX (MercadoPago) / Boleto (MercadoPago)
-5. **Confirmação** — resumo + número do pedido + email confirmação
+3. **Frete** — cotação via Melhor Envio API (PAC/SEDEX)
+4. **WhatsApp** — pedido registrado + redirecionamento com mensagem formatada
+5. **Confirmação** — aguardar contato da loja para combinar pagamento
 
 **Área do Cliente** (`/conta`)
 - Histórico de pedidos com status em tempo real
@@ -466,12 +468,12 @@ Home / Listagem → Página do Produto → [Adicionar ao Carrinho]
 → Admin recebe notificação → Admin atualiza status → Cliente recebe email
 ```
 
-### Fluxo de Pagamento (Stripe)
+### Fluxo de Compra (WhatsApp)
 ```
-Checkout → POST /api/pagamentos/stripe/create-intent
-→ Stripe retorna clientSecret → Frontend confirma com Stripe.js
-→ Webhook /api/webhooks/stripe recebe `payment_intent.succeeded`
-→ Atualiza Order.status para PAID → Envia email de confirmação
+Carrinho → Checkout (dados + endereço + frete Melhor Envio)
+→ POST /api/pedidos (paymentMethod: whatsapp, estoque validado mas não baixado)
+→ wa.me com mensagem do pedido → Admin confirma no WhatsApp
+→ Admin marca PROCESSING/PAID no painel → estoque baixado
 ```
 
 ### Fluxo de Pagamento (MercadoPago PIX)

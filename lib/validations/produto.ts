@@ -14,6 +14,10 @@ export const productSchema = z.object({
   tags: z.array(z.string()).default([]),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
+  weight: z.number().int().min(1).default(500),
+  height: z.number().int().min(1).default(12),
+  width: z.number().int().min(1).default(30),
+  length: z.number().int().min(1).default(20),
 })
 
 export const variantSchema = z.object({
