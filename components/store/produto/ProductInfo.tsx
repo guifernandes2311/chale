@@ -91,11 +91,12 @@ export function ProductInfo({ product }: ProductInfoProps) {
         {selectedVariant ? 'Adicionar ao carrinho' : 'Selecione tamanho e cor'}
       </Button>
 
-      <Accordion type="single" collapsible className="mt-8">
-        <AccordionItem value="descricao">
-          <AccordionTrigger>Descrição</AccordionTrigger>
-          <AccordionContent>{product.description}</AccordionContent>
-        </AccordionItem>
+      <div className="mt-8 border-t border-border pt-6">
+        <h2 className="text-sm font-medium">Descrição</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted">{product.description}</p>
+      </div>
+
+      <Accordion type="single" collapsible className="mt-4">
         <AccordionItem value="frete">
           <AccordionTrigger>Frete e entrega</AccordionTrigger>
           <AccordionContent>
