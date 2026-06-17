@@ -119,6 +119,8 @@ export const categories = pgTable('categories', {
   slug: text('slug').notNull().unique(),
   image: text('image'),
   parentId: text('parent_id'),
+  showOnHome: boolean('show_on_home').default(false).notNull(),
+  homeOrder: integer('home_order').default(0).notNull(),
 })
 
 export const products = pgTable('products', {

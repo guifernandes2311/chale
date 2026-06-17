@@ -13,18 +13,18 @@ interface ShippingStepProps {
 }
 
 export function ShippingStep({ cep, items, selected, onSelect }: ShippingStepProps) {
+  const cleanCep = cep.replace(/\D/g, '')
+  const canFetch = cleanCep.length === 8 && items.length > 0
+
   const [options, setOptions] = useState<ShippingOption[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const cleanCep = cep.replace(/\D/g, '')
-    if (cleanCep.length !== 8 || items.length === 0) return
+    if (!canFetch) return
 
-    setLoading(true)
-    setError(null)
+    let cancelled = false
 
-    fetch('/api/frete/calcular', {
+    void fetch('/api/frete/calcular', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -39,60 +39,69 @@ export function ShippingStep({ cep, items, selected, onSelect }: ShippingStepPro
       .then(async (res) => {
         const data = await res.json()
         if (!res.ok) throw new Error(data.error ?? 'Erro ao calcular frete')
+        if (cancelled) return
         setOptions(data.data ?? [])
         if (data.data?.length === 1) onSelect(data.data[0])
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Erro ao calcular frete'))
-      .finally(() => setLoading(false))
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Erro ao calcular frete')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cep, items])
+  }, [canFetch, cleanCep, items])
+
+  const loading = canFetch && options.length === 0 && error === null
+
+  if (!canFetch) {
+    return <p className="text-sm text-muted-foreground">Informe um CEP válido para calcular o frete.</p>
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-8 text-muted">
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Calculando frete...
       </div>
     )
   }
 
   if (error) {
-    return (
-      <div className="rounded-md border border-error/30 bg-error/5 p-4 text-sm text-error">
-        {error}
-        <p className="mt-2 text-muted">
-          Verifique se MELHOR_ENVIO_TOKEN e STORE_CEP estão configurados no servidor.
-        </p>
-      </div>
-    )
+    return <p className="text-sm text-destructive">{error}</p>
   }
 
   if (options.length === 0) {
-    return <p className="text-muted">Nenhuma opção de frete disponível para este CEP.</p>
+    return <p className="text-sm text-muted-foreground">Nenhuma opção de frete disponível.</p>
   }
 
   return (
     <div className="space-y-3">
-      {options.map((opt) => (
+      {options.map((option) => (
         <button
-          key={opt.id}
+          key={`${option.id}-${option.price}`}
           type="button"
-          onClick={() => onSelect(opt)}
-          className={`w-full rounded-md border p-4 text-left transition-colors ${
-            selected?.id === opt.id ? 'border-primary bg-secondary' : 'border-border'
+          onClick={() => onSelect(option)}
+          className={`w-full rounded-lg border p-4 text-left transition-colors ${
+            selected?.id === option.id
+              ? 'border-primary bg-primary/5'
+              : 'border-border hover:border-primary/50'
           }`}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">
-                {opt.name} — {opt.company}
-              </p>
-              <p className="text-sm text-muted">
-                Entrega em até {opt.deliveryDays} dia(s) úteis
+              <p className="font-medium">{option.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {option.deliveryDays} dias úteis
               </p>
             </div>
-            <p className="font-medium">
-              {opt.price === 0 ? 'Grátis' : `R$ ${opt.price.toFixed(2)}`}
+            <p className="font-semibold">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                option.price
+              )}
             </p>
           </div>
         </button>

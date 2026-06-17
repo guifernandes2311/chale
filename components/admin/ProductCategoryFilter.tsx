@@ -1,6 +1,7 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { useAdminFilterNavigation } from '@/hooks/useFilterNavigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface ProductCategoryFilterProps {
@@ -9,21 +10,22 @@ interface ProductCategoryFilterProps {
 }
 
 export function ProductCategoryFilter({ categories, count }: ProductCategoryFilterProps) {
-  const router = useRouter()
   const searchParams = useSearchParams()
+  const { pushQuery, isPending } = useAdminFilterNavigation()
 
   const updateFilter = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (value && value !== 'all') params.set('categoria', value)
-    else params.delete('categoria')
-    router.push(`?${params.toString()}`)
+    pushQuery((params) => {
+      if (value && value !== 'all') params.set('categoria', value)
+      else params.delete('categoria')
+    })
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4" aria-busy={isPending}>
       <Select
         value={searchParams.get('categoria') ?? 'all'}
         onValueChange={updateFilter}
+        disabled={isPending}
       >
         <SelectTrigger className="w-56">
           <SelectValue placeholder="Todas as categorias" />

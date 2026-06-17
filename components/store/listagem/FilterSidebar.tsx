@@ -1,37 +1,73 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useFilterNavigation } from '@/hooks/useFilterNavigation'
 
 interface FilterSidebarProps {
   categories: { slug: string; name: string }[]
 }
 
-export function FilterSidebar({ categories }: FilterSidebarProps) {
-  const router = useRouter()
+function DebouncedInput({
+  filterKey,
+  pushQuery,
+  ...props
+}: {
+  filterKey: string
+  pushQuery: (mutate: (params: URLSearchParams) => void) => void
+} & React.ComponentProps<typeof Input>) {
   const searchParams = useSearchParams()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const paramValue = searchParams.get(filterKey) ?? ''
 
-  const updateFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (value) params.set(key, value)
-    else params.delete(key)
-    params.delete('pagina')
-    router.push(`?${params.toString()}`)
-  }
-
-  const clearFilters = () => router.push(window.location.pathname)
+  const handleChange = useCallback(
+    (value: string) => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => {
+        pushQuery((params) => {
+          if (value) params.set(filterKey, value)
+          else params.delete(filterKey)
+          params.delete('pagina')
+        })
+      }, 300)
+    },
+    [filterKey, pushQuery]
+  )
 
   return (
-    <aside className="w-full shrink-0 md:w-56">
+    <Input
+      key={`${filterKey}-${paramValue}`}
+      defaultValue={paramValue}
+      onChange={(e) => handleChange(e.target.value)}
+      {...props}
+    />
+  )
+}
+
+export function FilterSidebar({ categories }: FilterSidebarProps) {
+  const searchParams = useSearchParams()
+  const { pushQuery, clearQuery, isPending } = useFilterNavigation()
+
+  const updateCategory = (v: string) => {
+    pushQuery((params) => {
+      if (v && v !== 'all') params.set('categoria', v)
+      else params.delete('categoria')
+      params.delete('pagina')
+    })
+  }
+
+  return (
+    <aside className="w-full shrink-0 md:w-56" aria-busy={isPending}>
       <div className="space-y-6 rounded-md border border-border bg-white p-4">
         <div>
           <Label className="text-xs uppercase tracking-wide text-muted">Categoria</Label>
           <Select
-            value={searchParams.get('categoria') ?? ''}
-            onValueChange={(v) => updateFilter('categoria', v === 'all' ? '' : v)}
+            value={searchParams.get('categoria') ?? 'all'}
+            onValueChange={updateCategory}
           >
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="Todas" />
@@ -49,37 +85,32 @@ export function FilterSidebar({ categories }: FilterSidebarProps) {
 
         <div>
           <Label className="text-xs uppercase tracking-wide text-muted">Tamanho</Label>
-          <Input
-            className="mt-2"
-            placeholder="Ex: 38"
-            defaultValue={searchParams.get('tamanho') ?? ''}
-            onBlur={(e) => updateFilter('tamanho', e.target.value)}
-          />
+          <DebouncedInput filterKey="tamanho" pushQuery={pushQuery} className="mt-2" placeholder="Ex: 38" />
         </div>
 
         <div>
           <Label className="text-xs uppercase tracking-wide text-muted">Preço mín.</Label>
-          <Input
+          <DebouncedInput
+            filterKey="precoMin"
+            pushQuery={pushQuery}
             className="mt-2"
             type="number"
             placeholder="0"
-            defaultValue={searchParams.get('precoMin') ?? ''}
-            onBlur={(e) => updateFilter('precoMin', e.target.value)}
           />
         </div>
 
         <div>
           <Label className="text-xs uppercase tracking-wide text-muted">Preço máx.</Label>
-          <Input
+          <DebouncedInput
+            filterKey="precoMax"
+            pushQuery={pushQuery}
             className="mt-2"
             type="number"
             placeholder="999"
-            defaultValue={searchParams.get('precoMax') ?? ''}
-            onBlur={(e) => updateFilter('precoMax', e.target.value)}
           />
         </div>
 
-        <Button variant="outline" size="sm" className="w-full" onClick={clearFilters}>
+        <Button variant="outline" size="sm" className="w-full" onClick={clearQuery} disabled={isPending}>
           Limpar filtros
         </Button>
       </div>

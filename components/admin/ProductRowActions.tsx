@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 
@@ -9,10 +10,12 @@ interface ProductRowActionsProps {
   id: string
   slug: string
   name: string
+  onDeleted?: (id: string) => void
 }
 
-export function ProductRowActions({ id, slug, name }: ProductRowActionsProps) {
+export function ProductRowActions({ id, slug, name, onDeleted }: ProductRowActionsProps) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   const handleDelete = async () => {
     if (!window.confirm(`Excluir permanentemente o produto "${name}"? Esta ação não pode ser desfeita.`)) {
@@ -24,7 +27,8 @@ export function ProductRowActions({ id, slug, name }: ProductRowActionsProps) {
 
     if (res.ok) {
       toast({ title: 'Produto excluído' })
-      router.refresh()
+      onDeleted?.(id)
+      startTransition(() => router.refresh())
     } else {
       toast({
         title: data.error ?? 'Erro ao excluir produto',
@@ -38,8 +42,14 @@ export function ProductRowActions({ id, slug, name }: ProductRowActionsProps) {
       <Button variant="ghost" size="sm" asChild>
         <Link href={`/admin/produtos/${id}`}>Editar</Link>
       </Button>
-      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
-        Excluir
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-red-600 hover:text-red-700"
+        onClick={handleDelete}
+        disabled={isPending}
+      >
+        {isPending ? 'Excluindo...' : 'Excluir'}
       </Button>
     </div>
   )

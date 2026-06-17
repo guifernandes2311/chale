@@ -13,6 +13,9 @@ export interface ProductCategory {
   name: string
   slug: string
   image: string | null
+  parentId: string | null
+  showOnHome: boolean
+  homeOrder: number
 }
 
 export interface Product {

@@ -6,6 +6,7 @@ import { products } from '@/drizzle/schema'
 import { getProductBySlug, productHasOrders } from '@/lib/api/products'
 import { productSchema } from '@/lib/validations/produto'
 import { slugify } from '@/lib/utils/slugify'
+import { revalidateProduct } from '@/lib/revalidate'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -49,6 +50,8 @@ export async function PUT(request: NextRequest, { params }: Props) {
       .where(eq(products.slug, slug))
       .returning()
 
+    revalidateProduct(updated.slug)
+
     return NextResponse.json({ data: updated })
   } catch (error) {
     console.error('[PUT /api/produtos/[slug]]', error)
@@ -78,6 +81,7 @@ export async function DELETE(_request: NextRequest, { params }: Props) {
     }
 
     await db.delete(products).where(eq(products.slug, slug))
+    revalidateProduct(slug)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/produtos/[slug]]', error)

@@ -20,10 +20,10 @@ const PLACEHOLDER_IMAGES = [
 ]
 
 const CATEGORY_DATA = [
-  { name: 'Tênis', slug: 'tenis' },
-  { name: 'Botas', slug: 'botas' },
-  { name: 'Sandálias', slug: 'sandalias' },
-  { name: 'Sapatos Sociais', slug: 'sapatos-sociais' },
+  { name: 'Tênis', slug: 'tenis', showOnHome: true, homeOrder: 1 },
+  { name: 'Botas', slug: 'botas', showOnHome: true, homeOrder: 2 },
+  { name: 'Sandálias', slug: 'sandalias', showOnHome: true, homeOrder: 3 },
+  { name: 'Sapatos Sociais', slug: 'sapatos-sociais', showOnHome: true, homeOrder: 4 },
 ]
 
 const PRODUCT_DATA = [

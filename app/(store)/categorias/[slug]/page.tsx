@@ -2,9 +2,11 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { ProductGrid } from '@/components/store/listagem/ProductGrid'
-import { SortSelect } from '@/components/store/listagem/SortSelect'
+import { SortSelectStandalone } from '@/components/store/listagem/SortSelect'
 import { Pagination } from '@/components/store/listagem/Pagination'
-import { getCategoryBySlug, getProducts } from '@/lib/api/products'
+import { Skeleton } from '@/components/ui/skeleton'
+import { getProducts } from '@/lib/api/products'
+import { getCategoryBySlug } from '@/lib/api/categories'
 import type { ProductFilters } from '@/types'
 
 interface Props {
@@ -45,12 +47,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <h1 className="font-display text-3xl font-semibold">{category.name}</h1>
           <p className="mt-1 text-sm text-muted">{data.pagination.total} produtos</p>
         </div>
-        <Suspense>
-          <SortSelect />
+        <Suspense fallback={<Skeleton className="h-10 w-44" />}>
+          <SortSelectStandalone />
         </Suspense>
       </div>
       <ProductGrid products={data.products} />
-      <Suspense>
+      <Suspense fallback={null}>
         <Pagination
           page={data.pagination.page}
           totalPages={data.pagination.totalPages}

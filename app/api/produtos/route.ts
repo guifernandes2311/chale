@@ -5,6 +5,7 @@ import { products } from '@/drizzle/schema'
 import { getProducts, getAllProductsAdmin } from '@/lib/api/products'
 import { productSchema } from '@/lib/validations/produto'
 import { slugify } from '@/lib/utils/slugify'
+import { revalidateProducts } from '@/lib/revalidate'
 import type { ProductFilters } from '@/types'
 
 export async function GET(request: NextRequest) {
@@ -59,6 +60,8 @@ export async function POST(request: NextRequest) {
       .insert(products)
       .values({ ...parsed.data, slug })
       .returning()
+
+    revalidateProducts()
 
     return NextResponse.json({ data: product }, { status: 201 })
   } catch (error) {

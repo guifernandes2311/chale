@@ -1,41 +1,32 @@
 'use client'
 
 import { useState } from 'react'
+import { useFormContext } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { fetchAddressByCep } from '@/lib/utils/viacep'
 import type { AddressInput } from '@/lib/validations/usuario'
 
-interface AddressStepProps {
-  value: Partial<AddressInput>
-  onChange: (address: AddressInput) => void
-}
-
-export function AddressStep({ value, onChange }: AddressStepProps) {
+export function AddressStep() {
+  const {
+    register,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useFormContext<AddressInput>()
   const [loading, setLoading] = useState(false)
 
-  const update = (field: keyof AddressInput, val: string) => {
-    onChange({ ...value, [field]: val } as AddressInput)
-  }
-
   const handleCepBlur = async () => {
-    if (!value.cep) return
+    const cep = getValues('cep')
+    if (!cep) return
     setLoading(true)
-    const data = await fetchAddressByCep(value.cep)
+    const data = await fetchAddressByCep(cep)
     setLoading(false)
     if (data) {
-      onChange({
-        ...value,
-        cep: value.cep ?? '',
-        label: value.label ?? 'Casa',
-        street: data.logradouro,
-        district: data.bairro,
-        city: data.localidade,
-        state: data.uf,
-        number: value.number ?? '',
-        complement: value.complement,
-        isDefault: value.isDefault ?? false,
-      } as AddressInput)
+      setValue('street', data.logradouro)
+      setValue('district', data.bairro)
+      setValue('city', data.localidade)
+      setValue('state', data.uf)
     }
   }
 
@@ -44,84 +35,62 @@ export function AddressStep({ value, onChange }: AddressStepProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="label">Identificação</Label>
-          <Input
-            id="label"
-            placeholder="Casa, Trabalho..."
-            value={value.label ?? ''}
-            onChange={(e) => update('label', e.target.value)}
-            className="mt-1"
-          />
+          <Input id="label" placeholder="Casa, Trabalho..." className="mt-1" {...register('label')} />
+          {errors.label && <p className="mt-1 text-xs text-red-600">{errors.label.message}</p>}
         </div>
         <div>
           <Label htmlFor="cep">CEP</Label>
           <Input
             id="cep"
             placeholder="00000-000"
-            value={value.cep ?? ''}
-            onChange={(e) => update('cep', e.target.value)}
-            onBlur={handleCepBlur}
             className="mt-1"
+            {...register('cep')}
+            onBlur={handleCepBlur}
           />
+          {errors.cep && <p className="mt-1 text-xs text-red-600">{errors.cep.message}</p>}
           {loading && <p className="mt-1 text-xs text-muted">Buscando endereço...</p>}
         </div>
       </div>
       <div>
         <Label htmlFor="street">Rua</Label>
-        <Input
-          id="street"
-          value={value.street ?? ''}
-          onChange={(e) => update('street', e.target.value)}
-          className="mt-1"
-        />
+        <Input id="street" className="mt-1" {...register('street')} />
+        {errors.street && <p className="mt-1 text-xs text-red-600">{errors.street.message}</p>}
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <Label htmlFor="number">Número</Label>
-          <Input
-            id="number"
-            value={value.number ?? ''}
-            onChange={(e) => update('number', e.target.value)}
-            className="mt-1"
-          />
+          <Input id="number" className="mt-1" {...register('number')} />
+          {errors.number && <p className="mt-1 text-xs text-red-600">{errors.number.message}</p>}
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="complement">Complemento</Label>
-          <Input
-            id="complement"
-            value={value.complement ?? ''}
-            onChange={(e) => update('complement', e.target.value)}
-            className="mt-1"
-          />
+          <Input id="complement" className="mt-1" {...register('complement')} />
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <Label htmlFor="district">Bairro</Label>
-          <Input
-            id="district"
-            value={value.district ?? ''}
-            onChange={(e) => update('district', e.target.value)}
-            className="mt-1"
-          />
+          <Input id="district" className="mt-1" {...register('district')} />
+          {errors.district && <p className="mt-1 text-xs text-red-600">{errors.district.message}</p>}
         </div>
         <div>
           <Label htmlFor="city">Cidade</Label>
-          <Input
-            id="city"
-            value={value.city ?? ''}
-            onChange={(e) => update('city', e.target.value)}
-            className="mt-1"
-          />
+          <Input id="city" className="mt-1" {...register('city')} />
+          {errors.city && <p className="mt-1 text-xs text-red-600">{errors.city.message}</p>}
         </div>
         <div>
           <Label htmlFor="state">UF</Label>
           <Input
             id="state"
             maxLength={2}
-            value={value.state ?? ''}
-            onChange={(e) => update('state', e.target.value.toUpperCase())}
             className="mt-1"
+            {...register('state', {
+              onChange: (e) => {
+                e.target.value = e.target.value.toUpperCase()
+              },
+            })}
           />
+          {errors.state && <p className="mt-1 text-xs text-red-600">{errors.state.message}</p>}
         </div>
       </div>
     </div>

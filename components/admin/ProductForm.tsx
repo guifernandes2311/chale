@@ -59,10 +59,6 @@ export function ProductForm({ mode, initialData, slug, onDelete }: ProductFormPr
       .then((d) => d.data && setCategories(d.data))
   }, [])
 
-  useEffect(() => {
-    if (initialData) setForm(initialData)
-  }, [initialData])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (form.images.length === 0) {
@@ -89,7 +85,6 @@ export function ProductForm({ mode, initialData, slug, onDelete }: ProductFormPr
     if (res.ok) {
       toast({ title: mode === 'create' ? 'Produto criado' : 'Produto atualizado' })
       router.push('/admin/produtos')
-      router.refresh()
     } else {
       const data = await res.json().catch(() => ({}))
       toast({

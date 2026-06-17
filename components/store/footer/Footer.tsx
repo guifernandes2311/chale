@@ -2,7 +2,11 @@ import Link from 'next/link'
 import { NewsletterSection } from '@/components/store/home/NewsletterSection'
 import { Logo } from '@/components/Logo'
 
-export function Footer() {
+interface FooterProps {
+  categories?: { slug: string; name: string }[]
+}
+
+export function Footer({ categories = [] }: FooterProps) {
   return (
     <footer className="mt-auto border-t border-border bg-white">
       <NewsletterSection />
@@ -19,16 +23,33 @@ export function Footer() {
           <div>
             <h4 className="text-sm font-semibold">Loja</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted">
-              <li><Link href="/produtos" className="hover:text-primary">Todos os produtos</Link></li>
-              <li><Link href="/categorias/tenis" className="hover:text-primary">Tênis</Link></li>
-              <li><Link href="/categorias/botas" className="hover:text-primary">Botas</Link></li>
+              <li>
+                <Link href="/produtos" className="hover:text-primary">
+                  Todos os produtos
+                </Link>
+              </li>
+              {categories.map((cat) => (
+                <li key={cat.slug}>
+                  <Link href={`/categorias/${cat.slug}`} className="hover:text-primary">
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
             <h4 className="text-sm font-semibold">Ajuda</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted">
-              <li><Link href="/conta/pedidos" className="hover:text-primary">Meus pedidos</Link></li>
-              <li><Link href="/conta/perfil" className="hover:text-primary">Minha conta</Link></li>
+              <li>
+                <Link href="/conta/pedidos" className="hover:text-primary">
+                  Meus pedidos
+                </Link>
+              </li>
+              <li>
+                <Link href="/conta/perfil" className="hover:text-primary">
+                  Minha conta
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

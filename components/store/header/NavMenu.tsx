@@ -4,25 +4,26 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 
-const NAV_ITEMS = [
-  { href: '/produtos', label: 'Produtos' },
-  { href: '/categorias/tenis', label: 'Tênis' },
-  { href: '/categorias/botas', label: 'Botas' },
-  { href: '/categorias/sandalias', label: 'Sandálias' },
-  { href: '/categorias/sapatos-sociais', label: 'Sociais' },
-]
-
 interface NavMenuProps {
+  categories?: { slug: string; name: string }[]
   onNavigate?: () => void
   className?: string
 }
 
-export function NavMenu({ onNavigate, className }: NavMenuProps) {
+export function NavMenu({ categories = [], onNavigate, className }: NavMenuProps) {
   const pathname = usePathname()
+
+  const navItems = [
+    { href: '/produtos', label: 'Produtos' },
+    ...categories.map((cat) => ({
+      href: `/categorias/${cat.slug}`,
+      label: cat.name,
+    })),
+  ]
 
   return (
     <nav className={cn('flex flex-col gap-4 md:flex-row md:items-center md:gap-8', className)}>
-      {NAV_ITEMS.map((item) => (
+      {navItems.map((item) => (
         <Link
           key={item.href}
           href={item.href}

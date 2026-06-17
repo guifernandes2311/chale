@@ -30,6 +30,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemProps)
             variant="outline"
             size="icon"
             className="h-7 w-7"
+            aria-label="Diminuir quantidade"
             onClick={() => onUpdateQuantity(item.variantId, item.quantity - 1)}
           >
             <Minus className="h-3 w-3" />
@@ -39,6 +40,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemProps)
             variant="outline"
             size="icon"
             className="h-7 w-7"
+            aria-label="Aumentar quantidade"
             onClick={() => onUpdateQuantity(item.variantId, item.quantity + 1)}
           >
             <Plus className="h-3 w-3" />

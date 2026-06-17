@@ -2,17 +2,11 @@ import { db } from '@/lib/db'
 import { products, categories, variants, orderItems } from '@/drizzle/schema'
 import { eq, and, gte, lte, ilike, desc, asc, sql, inArray } from 'drizzle-orm'
 import type { ProductFilters } from '@/types'
+import { getCategoryBySlug } from '@/lib/api/categories'
+
+export { getCategories, getCategoryBySlug } from '@/lib/api/categories'
 
 const PAGE_SIZE = 12
-
-export async function getCategories() {
-  return db.select().from(categories).orderBy(asc(categories.name))
-}
-
-export async function getCategoryBySlug(slug: string) {
-  const [category] = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1)
-  return category ?? null
-}
 
 export async function getProducts(filters: ProductFilters = {}) {
   const page = parseInt(filters.pagina ?? '1', 10)
@@ -213,6 +207,10 @@ export async function getProductByIdAdmin(id: string) {
     .limit(1)
 
   return item ?? null
+}
+
+export async function getVariantsByProductId(productId: string) {
+  return db.select().from(variants).where(eq(variants.productId, productId))
 }
 
 export async function variantHasOrders(variantId: string) {

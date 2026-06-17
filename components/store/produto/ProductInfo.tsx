@@ -20,6 +20,7 @@ interface ProductInfoProps {
 export function ProductInfo({ product }: ProductInfoProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
   const { addToCart } = useCart()
 
   const selectedVariant = useMemo(() => {
@@ -34,17 +35,22 @@ export function ProductInfo({ product }: ProductInfoProps) {
     product.compareAt && parseFloat(product.compareAt) > parseFloat(product.price)
 
   const handleAddToCart = async () => {
-    if (!selectedVariant) return
-    await addToCart({
-      variantId: selectedVariant.id,
-      productId: product.id,
-      name: product.name,
-      image: product.images[0] ?? '',
-      size: selectedVariant.size,
-      color: selectedVariant.color ?? undefined,
-      price: parseFloat(product.price),
-      quantity: 1,
-    })
+    if (!selectedVariant || adding) return
+    setAdding(true)
+    try {
+      await addToCart({
+        variantId: selectedVariant.id,
+        productId: product.id,
+        name: product.name,
+        image: product.images[0] ?? '',
+        size: selectedVariant.size,
+        color: selectedVariant.color ?? undefined,
+        price: parseFloat(product.price),
+        quantity: 1,
+      })
+    } finally {
+      setAdding(false)
+    }
   }
 
   return (
@@ -81,15 +87,22 @@ export function ProductInfo({ product }: ProductInfoProps) {
         />
       </div>
 
-      <Button
-        variant="default"
-        size="lg"
-        className="mt-8 w-full"
-        disabled={!selectedVariant}
-        onClick={handleAddToCart}
-      >
-        {selectedVariant ? 'Adicionar ao carrinho' : 'Selecione tamanho e cor'}
-      </Button>
+      <div aria-live="polite" className="mt-8">
+        <Button
+          variant="default"
+          size="lg"
+          className="w-full"
+          disabled={!selectedVariant || adding}
+          onClick={handleAddToCart}
+          aria-busy={adding}
+        >
+          {adding
+            ? 'Adicionando...'
+            : selectedVariant
+              ? 'Adicionar ao carrinho'
+              : 'Selecione tamanho e cor'}
+        </Button>
+      </div>
 
       <div className="mt-8 border-t border-border pt-6">
         <h2 className="text-sm font-medium">Descrição</h2>

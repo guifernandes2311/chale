@@ -1,5 +1,6 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -7,12 +8,23 @@ import { useCartStore } from '@/store/cartStore'
 import { CartItemRow } from './CartItem'
 import { CartSummary } from './CartSummary'
 
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
+}
+
 export function CartDrawer() {
   const { items, isOpen, toggleCart, updateQuantity, removeItem, subtotal } = useCartStore()
+  const isClient = useIsClient()
+
+  if (!isClient) return null
 
   return (
     <Sheet open={isOpen} onOpenChange={toggleCart}>
-      <SheetContent side="right" className="flex flex-col">
+      <SheetContent side="right" className="flex flex-col" aria-label="Carrinho de compras">
         <SheetHeader>
           <SheetTitle>Carrinho ({items.length})</SheetTitle>
         </SheetHeader>

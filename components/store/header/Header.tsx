@@ -9,7 +9,11 @@ import { CartIcon } from './CartIcon'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/Logo'
 
-export function Header() {
+interface HeaderProps {
+  categories?: { slug: string; name: string }[]
+}
+
+export function Header({ categories = [] }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { data: session } = useSession()
 
@@ -20,7 +24,7 @@ export function Header() {
           <Logo size="md" />
         </Link>
 
-        <NavMenu className="hidden md:flex" />
+        <NavMenu categories={categories} className="hidden md:flex" />
 
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -64,7 +68,7 @@ export function Header() {
 
       {mobileOpen && (
         <div className="border-t border-border bg-secondary px-4 py-4 md:hidden">
-          <NavMenu onNavigate={() => setMobileOpen(false)} />
+          <NavMenu categories={categories} onNavigate={() => setMobileOpen(false)} />
           <div className="mt-4 flex flex-col gap-2">
             {session ? (
               <>

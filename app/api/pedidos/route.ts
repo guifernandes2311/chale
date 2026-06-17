@@ -7,6 +7,8 @@ import { users } from '@/drizzle/schema'
 import bcrypt from 'bcryptjs'
 import { buildWhatsAppMessage, getWhatsAppUrl } from '@/lib/whatsapp'
 
+const idempotencyCache = new Map<string, { response: object; expires: number }>()
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth()
@@ -36,6 +38,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const idempotencyKey = request.headers.get('X-Idempotency-Key')
+    if (idempotencyKey) {
+      const cached = idempotencyCache.get(idempotencyKey)
+      if (cached && cached.expires > Date.now()) {
+        return NextResponse.json(cached.response, { status: 201 })
+      }
+    }
+
     const session = await auth()
     const body = await request.json()
     const parsed = createOrderSchema.safeParse(body)
@@ -100,7 +110,16 @@ export async function POST(request: NextRequest) {
       whatsappUrl = getWhatsAppUrl(parsed.data.customer.phone, message)
     }
 
-    return NextResponse.json({ order, whatsappUrl }, { status: 201 })
+    const responseBody = { order, whatsappUrl }
+
+    if (idempotencyKey) {
+      idempotencyCache.set(idempotencyKey, {
+        response: responseBody,
+        expires: Date.now() + 5 * 60 * 1000,
+      })
+    }
+
+    return NextResponse.json(responseBody, { status: 201 })
   } catch (error) {
     console.error('[POST /api/pedidos]', error)
     const message = error instanceof Error ? error.message : 'Erro interno'

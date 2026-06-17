@@ -1,16 +1,17 @@
 import { HeroBanner } from '@/components/store/home/HeroBanner'
 import { CategoryGrid } from '@/components/store/home/CategoryGrid'
 import { FeaturedProducts } from '@/components/store/home/FeaturedProducts'
-import { getCategories, getFeaturedProducts, getProducts } from '@/lib/api/products'
+import { getHomeCategories } from '@/lib/api/categories'
+import { getFeaturedProducts, getProducts } from '@/lib/api/products'
 
 export default async function HomePage() {
-  let categories: Awaited<ReturnType<typeof getCategories>> = []
+  let categories: Awaited<ReturnType<typeof getHomeCategories>> = []
   let featured: Awaited<ReturnType<typeof getFeaturedProducts>> = []
   let recent: Awaited<ReturnType<typeof getProducts>>['products'] = []
 
   try {
     ;[categories, featured, { products: recent }] = await Promise.all([
-      getCategories(),
+      getHomeCategories(),
       getFeaturedProducts(8),
       getProducts({ ordenar: 'novo', pagina: '1' }),
     ])
