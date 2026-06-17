@@ -19,6 +19,22 @@ export const metadata: Metadata = {
     template: '%s | Chalé Calçados',
   },
   description: 'Loja de calçados com estilo e conforto. Tênis, botas, sandálias e sapatos sociais.',
+  icons: {
+    icon: [
+      { url: '/favicon-chale/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon-chale/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon-chale/favicon.ico',
+    apple: '/favicon-chale/apple-touch-icon.png',
+  },
+  manifest: '/favicon-chale/site.webmanifest',
+  openGraph: {
+    title: 'Chalé Calçados',
+    description: 'Calçados com estilo e conforto para o seu dia a dia.',
+    siteName: 'Chalé Calçados',
+    locale: 'pt_BR',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

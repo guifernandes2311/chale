@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { NewsletterSection } from '@/components/store/home/NewsletterSection'
+import { Logo } from '@/components/Logo'
 
 export function Footer() {
   return (
@@ -8,7 +9,9 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-4">
           <div>
-            <h3 className="font-display text-lg font-semibold">Chalé Calçados</h3>
+            <Link href="/" aria-label="Chalé Calçados — Página inicial">
+              <Logo size="sm" variant="muted" />
+            </Link>
             <p className="mt-2 text-sm text-muted">
               Calçados com estilo e conforto para o seu dia a dia.
             </p>

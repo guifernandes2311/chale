@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { Logo } from '@/components/Logo'
 
 const LINKS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -18,8 +19,8 @@ export function Sidebar() {
 
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-white p-4">
-      <Link href="/" className="font-display text-lg font-semibold">
-        Chalé Admin
+      <Link href="/" aria-label="Chalé Calçados — Página inicial">
+        <Logo size="sm" />
       </Link>
       <nav className="mt-8 space-y-1">
         {LINKS.map((link) => {
